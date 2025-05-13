@@ -1,0 +1,21 @@
+name: Test IPv6 Connectivity
+
+on: [push]
+
+jobs:
+  test-ipv6:
+    runs-on: ubuntu-latest # 或者 windows-latest, macos-latest
+    steps:
+      - name: Check IPv6 connectivity (Google)
+        run: curl -6 -v --connect-timeout 10 https://ipv6.google.com || echo "IPv6 connection failed or timed out"
+
+      - name: Check IPv6 connectivity (Test-IPv6.com)
+        run: curl -6 -v --connect-timeout 10 https://test-ipv6.com || echo "IPv6 connection failed or timed out"
+
+      - name: Show network interfaces (Linux/macOS)
+        if: runner.os == 'Linux' || runner.os == 'macOS'
+        run: ip -6 addr show scope global || ifconfig | grep inet6
+
+      - name: Show network interfaces (Windows)
+        if: runner.os == 'Windows'
+        run: ipconfig | findstr /i "IPv6 Address"
