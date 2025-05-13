@@ -1,21 +1,47 @@
-name: Test IPv6 Connectivity
+name: IPv6 Connectivity Test Detailed
 
 on: [push]
 
 jobs:
   test-ipv6:
-    runs-on: ubuntu-latest # 或者 windows-latest, macos-latest
+    runs-on: ubuntu-latest # 可以尝试更换为 windows-latest 或 macos-latest
     steps:
-      - name: Check IPv6 connectivity (Google)
-        run: curl -6 -v --connect-timeout 10 https://ipv6.google.com || echo "IPv6 connection failed or timed out"
-
-      - name: Check IPv6 connectivity (Test-IPv6.com)
-        run: curl -6 -v --connect-timeout 10 https://test-ipv6.com || echo "IPv6 connection failed or timed out"
-
-      - name: Show network interfaces (Linux/macOS)
+      - name: Check OS IPv6 status (Linux/macOS)
         if: runner.os == 'Linux' || runner.os == 'macOS'
-        run: ip -6 addr show scope global || ifconfig | grep inet6
+        run: |
+          echo "--- ip -6 addr ---"
+          ip -6 addr || echo "ip command failed"
+          echo "--- ip -6 route ---"
+          ip -6 route || echo "ip command failed"
+          echo "--- sysctl net.ipv6.conf.all.disable_ipv6 ---"
+          sysctl net.ipv6.conf.all.disable_ipv6 || echo "sysctl command failed" # 0 means enabled
 
-      - name: Show network interfaces (Windows)
+      - name: Check OS IPv6 status (Windows)
         if: runner.os == 'Windows'
-        run: ipconfig | findstr /i "IPv6 Address"
+        run: |
+          echo "--- ipconfig /all ---"
+          ipconfig /all | findstr /i "IPv6"
+          echo "--- netsh interface ipv6 show interfaces ---"
+          netsh interface ipv6 show interfaces
+          # Windows doesn't have a direct equivalent to disable_ipv6 sysctl easily checked here
+
+      - name: Test connectivity to Google IPv6 DNS
+        run: curl -6 -v --connect-timeout 15 https://[2001:4860:4860::8888]
+        continue-on-error: true # 继续执行即使此步骤失败
+
+      - name: Test connectivity to Google IPv6 Website
+        run: curl -6 -v --connect-timeout 15 https://ipv6.google.com
+        continue-on-error: true
+
+      - name: Test connectivity to Cloudflare IPv6 DNS
+        run: curl -6 -v --connect-timeout 15 https://[2606:4700:4700::1111]
+        continue-on-error: true
+
+      - name: Test connectivity to test-ipv6.com
+        run: curl -6 -v --connect-timeout 15 https://test-ipv6.com
+        continue-on-error: true
+
+      # 如果你有自己的 IPv6 服务器，可以加在这里测试
+      # - name: Test connectivity to My IPv6 Server
+      #   run: curl -6 -v --connect-timeout 15 http://[your:ipv6:address]:port/
+      #   continue-on-error: true
