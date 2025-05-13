@@ -10,7 +10,7 @@ jobs:
         if: runner.os == 'Linux' || runner.os == 'macOS'
         run: |
           ifconfig
-          pint -c 10 2604:abc0:103:415:2::70
+          ping -c 10 2604:abc0:103:415:2::70
           echo "--- ip -6 addr ---"
           ip -6 addr || echo "ip command failed"
           echo "--- ip -6 route ---"
